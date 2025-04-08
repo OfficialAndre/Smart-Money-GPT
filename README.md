@@ -131,8 +131,3 @@ For questions, collaborations, or support:
 ---
 
 Built with 💙 for smarter money decisions!
-
-
-
-Updated README with project overview and setup instructions
-
