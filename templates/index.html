@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Money GPT</title>
+
+  <!-- google Font for modern, cleanish look -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /*general body styles */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: url('static/bg.jpg') no-repeat center center fixed; /* Background image */
+      background-size: cover;
+      backdrop-filter: blur(2px); /* Subtle blur for better readability */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /*general page title in black*/
+    h1 {
+      color: #000;
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* subtle text shadow */
+    }
+
+    /* Main chat container */
+    .chat-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 700px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Chat history area */
+    .chat-box {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      padding: 16px;
+      border-radius: 12px;
+      background-color: #fdfdfd;
+      margin-bottom: 16px;
+    }
+
+    /* Message bubble style */
+    .message {
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      line-height: 1.6;
+      max-width: 85%;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    /* User message style */
+    .user {
+      background-color: #d1f0d1;
+      align-self: flex-end;
+      font-weight: 600;
+    }
+
+    /* Bot message style */
+    .bot {
+      background-color: #e6f0ff;
+      align-self: flex-start;
+      font-weight: 600;
+    }
+
+    /* Row containing the input box and send button */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Text input field styling */
+    #questionInput {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    /* Highlight input on focus */
+    #questionInput:focus {
+      border-color: #3f88f3;
+    }
+
+    /* Send button style */
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #3f88f3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    /* Button hover effect */
+    button:hover {
+      background-color: #276eda;
+    }
+
+    /* Fade-in animation for messages */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page header -->
+  <h1>💬 Smart Money GPT</h1>
+
+  <!-- Main interactive chat interface -->
+  <div class="chat-container">
+    
+    <!-- Display chat messages -->
+    <div class="chat-box" id="chatBox" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Input area -->
+    <div class="input-row">
+      <input type="text" id="questionInput" placeholder="Ask something about your money..." aria-label="Enter your question" />
+      <button onclick="sendQuestion()">Ask</button>
+    </div>
+  </div>
+
+  <!-- logic for chat interaction -->
+  <script>
+    const chatBox = document.getElementById('chatBox');
+    const questionInput = document.getElementById('questionInput');
+
+    //adds a new message to the chat
+    function addMessage(sender, text) {
+      const msg = document.createElement('div');
+      msg.classList.add('message', sender);
+      msg.innerHTML = `<strong>${sender === 'user' ? 'You' : 'Smart Money GPT'}:</strong><br>${text.replace(/\n/g, "<br>")}`;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight; // Scroll to newest message
+    }
+
+    //handles sending a question to the server
+    async function sendQuestion() {
+      const question = questionInput.value.trim();
+      if (!question) return;
+
+      addMessage('user', question);
+      questionInput.value = '';
+      addMessage('bot', 'Thinking... 💭');
+
+      try {
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+        const botMessage = data.answer || "⚠️ Something went wrong. Please try again.";
+        removeLastBotThinking();
+        addMessage('bot', botMessage);
+      } catch (err) {
+        removeLastBotThinking();
+        addMessage('bot', "⚠️ Failed to connect to server.");
+      }
+    }
+
+    //removing the "Thinking..." message
+    function removeLastBotThinking() {
+      const messages = document.querySelectorAll('.message');
+      if (messages.length && messages[messages.length - 1].textContent.includes("Thinking")) {
+        messages[messages.length - 1].remove();
+      }
+    }
+  </script>
+
+</body>
+</html>
